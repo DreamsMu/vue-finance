@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row>
-      <el-col :span="6">
+      <el-col :span="12">
         <el-card class="box-card" shadow="hover">
           <div slot="header" class="clearfix">
             <span>家庭总金额</span>
@@ -11,79 +11,99 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="12">
         <el-card class="box-card" shadow="hover">
           <div slot="header" class="clearfix">
-            <span>当月收入</span>
+            <span>当月收入金额</span>
           </div>
           <div>
-            6,432
+            23,424,321
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>当月支出</span>
-          </div>
-          <div>
-            2,432
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
-          <div slot="header" class="clearfix">
-            <span>外债/贷款</span>
-          </div>
-          <div>
-            3,242
-          </div>
-        </el-card>
+      <el-col :span="8">
       </el-col>
     </el-row>
     <el-row style="margin-top: 20px">
-      <el-col :span="24">
+      <el-col>
         <div id="chart" style="height: 400px"></div>
       </el-col>
     </el-row>
-    <el-divider>历史记录</el-divider>
-    <el-row>
-      <el-col :span="24">
-        <div class="block">
-          <el-timeline>
-            <el-timeline-item timestamp="2018/4/12" placement="top">
-              <el-card>
-                <h4>更新 Github 模板</h4>
-                <p>王小虎 提交于 2018/4/12 20:46</p>
-              </el-card>
-            </el-timeline-item>
-            <el-timeline-item timestamp="2018/4/3" placement="top">
-              <el-card>
-                <h4>更新 Github 模板</h4>
-                <p>王小虎 提交于 2018/4/3 20:46</p>
-              </el-card>
-            </el-timeline-item>
-            <el-timeline-item timestamp="2018/4/2" placement="top">
-              <el-card>
-                <h4>更新 Github 模板</h4>
-                <p>王小虎 提交于 2018/4/2 20:46</p>
-              </el-card>
-            </el-timeline-item>
-          </el-timeline>
-        </div>
-      </el-col>
-    </el-row>
+
+    <el-table
+        :data="tableData"
+        style="width: 100%; margin-top: 20px">
+      <el-table-column
+          prop="date"
+          label="日期"
+          width="180">
+      </el-table-column>
+      <el-table-column
+          prop="name"
+          label="姓名"
+          width="180">
+      </el-table-column>
+      <el-table-column
+          prop="price"
+          label="金额">
+      </el-table-column>
+      <el-table-column
+          prop="way"
+          label="方式">
+      </el-table-column>
+      <el-table-column
+          prop="way"
+          label="操作">
+        <el-button type="primary" icon="el-icon-edit" circle></el-button>
+        <el-button type="danger" icon="el-icon-delete" circle></el-button>
+      </el-table-column>
+    </el-table>
+
 
   </div>
 </template>
 
 <script>
-import * as echarts from 'echarts';
-// 基于准备好的dom，初始化echarts实例
+
+import * as echarts from "echarts";
 
 export default {
-  name: "Main",
+  name: "Income",
+  data() {
+    return {
+      tableData: [{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      },{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      },{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      },{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      },{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      },{
+        date: '2016-05-02',
+        name: '王小虎',
+        price: 324,
+        way: '股票'
+      }]
+    }
+  },
   mounted() {
     var myChart = echarts.init(document.getElementById('chart'));
     // 绘制图表
@@ -163,13 +183,4 @@ export default {
 </script>
 
 <style scoped>
-.clearfix:before,
-.clearfix:after {
-  display: table;
-  content: "";
-}
-.clearfix:after {
-  clear: both
-}
-
 </style>
