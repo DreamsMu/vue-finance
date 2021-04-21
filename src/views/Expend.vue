@@ -1,55 +1,63 @@
 <template>
   <div>
     <el-row>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
+      <el-col :span="5">
+        <el-card class="box-card bold" shadow="hover">
           <div slot="header" class="clearfix">
-            <span>家庭总金额</span>
+            <span>总资金</span>
           </div>
-          <div>
-            23,424,321
+          <div style="color: #E6A23C;">
+            ¥ {{ total.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
+      <el-col :span="5">
+        <el-card class="box-card bold" shadow="hover">
           <div slot="header" class="clearfix">
-            <span>当月支出</span>
+            <span>月支出</span>
           </div>
-          <div>
-            4,321
+          <div style="color: #F56C6C;">
+            ¥ {{ mouthExpend.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
+      <el-col :span="4">
+        <el-card class="box-card bold" shadow="hover">
           <div slot="header" class="clearfix">
-            <span>总欠款</span>
+            <span>年支出</span>
           </div>
-          <div>
-            4,321
+          <div style="color: #F56C6C;">
+            ¥ {{ yearExpend.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="box-card" shadow="hover">
+      <el-col :span="5">
+        <el-card class="box-card bold" shadow="hover">
           <div slot="header" class="clearfix">
-            <span>下月应还</span>
+            <span>总支出</span>
           </div>
-          <div>
-            4,321
+          <div style="color: #F56C6C;">
+            ¥ {{ totalExpend.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
-    </el-row>
-    <el-row style="margin-top: 20px">
-      <el-col :span="24">
-        <div id="chart" style="height: 400px"></div>
+      <el-col :span="5">
+        <el-card class="box-card bold" shadow="hover">
+          <div slot="header" class="clearfix">
+            <span>欠款</span>
+          </div>
+          <div v-if="debt == 0 ? false : true" style="color: #F56C6C;">
+            ¥ {{ debt.toLocaleString() }}
+          </div>
+          <div v-if="debt == 0 ? true : false" style="color: #C0C4CC">
+            无
+          </div>
+        </el-card>
       </el-col>
     </el-row>
 
     <el-table
-        :data="tableData"
+        :data="expendTable"
         style="width: 100%; margin-top: 20px">
       <el-table-column
           prop="date"
@@ -67,136 +75,221 @@
       </el-table-column>
       <el-table-column
           prop="way"
-          label="方式">
+          label="用途">
       </el-table-column>
       <el-table-column
-          prop="way"
+          prop="payway"
+          label="支付方式">
+      </el-table-column>
+      <el-table-column
           label="操作">
-        <el-button type="primary" icon="el-icon-edit" circle></el-button>
-        <el-button type="danger" icon="el-icon-delete" circle></el-button>
+        <template slot-scope="scope">
+          <el-button size="mini" @click="syncData(scope.$index, scope.row)">编辑</el-button>
+          <el-popconfirm title="确定要删除此条记录吗？" @confirm="delData(scope.$index, scope.row)">
+            <el-button slot="reference" size="mini" type="danger" style="margin-left: 10px">删除</el-button>
+          </el-popconfirm>
+        </template>
       </el-table-column>
     </el-table>
+    <!--分页-->
+    <div class="block" style="text-align: center; margin-top: 20px;">
+      <el-pagination
+          @current-change="currentChange"
+          @size-change="sizeChange"
+          :page-sizes="[5, 10, 20, 50]"
+          :page-size="pageData.rows"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pageData.total">
+      </el-pagination>
+    </div>
+    <el-dialog title="修改订单" :visible.sync="dialogFormVisible" width="400px" @close="resetForm('expendForm')">
+      <el-form :rules="rulesExpend" ref="expendForm" :model="expendForm" label-width="80px" size="mini">
+        <el-form-item label="姓名" prop="name">
+          <el-input v-model="expendForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="金额" prop="price">
+          <el-input type="number" v-model="expendForm.price"></el-input>
+        </el-form-item>
+        <el-form-item label="支出用途" prop="way">
+          <el-select v-model="expendForm.way" placeholder="请选择支出用途">
+            <el-option label="餐饮" value="餐饮"></el-option>
+            <el-option label="购物" value="购物"></el-option>
+            <el-option label="日用" value="日用"></el-option>
+            <el-option label="交通" value="交通"></el-option>
+            <el-option label="娱乐" value="娱乐"></el-option>
+            <el-option label="通讯" value="通讯"></el-option>
+            <el-option label="服饰" value="服饰"></el-option>
+            <el-option label="烟酒" value="烟酒"></el-option>
+            <el-option label="医疗" value="医疗"></el-option>
+            <el-option label="书籍" value="书籍"></el-option>
+            <el-option label="礼金" value="礼金"></el-option>
+            <el-option label="捐赠" value="捐赠"></el-option>
+            <el-option label="债务" value="债务"></el-option>
+            <el-option label="分期还款" value="分期还款"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支出方式" prop="payway">
+          <el-select v-model="expendForm.payway" placeholder="请选择支出方式">
+            <el-option label="微信支付" value="微信支付"></el-option>
+            <el-option label="支付宝支付" value="支付宝支付"></el-option>
+            <el-option label="分期付款" value="分期付款"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="日期" prop="date">
+          <el-date-picker
+            v-model="expendForm.date"
+            align="right"
+            type="date"
+            placeholder="选择日期"
+            format="yyyy 年 MM 月 dd 日"
+            value-format="yyyy-MM-dd"
+            :picker-options="pickerOptions">
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editData(expendForm)">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import * as echarts from "echarts";
+import qs from 'qs'
 
 export default {
   name: "Expend",
   data() {
     return {
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      },{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      },{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      },{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      },{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      },{
-        date: '2016-05-02',
-        name: '王小虎',
-        price: 324,
-        way: '股票'
-      }]
+      dialogFormVisible: false,
+      total: '',
+      mouthExpend: '',
+      yearExpend: '',
+      totalExpend: '',
+      debt: '',
+      expendForm: {},
+      expendTable: [],
+      pageData: {
+        page: 1,
+        rows: 5,
+        total: 0
+      },
+      rulesExpend: {
+        name: { required: true, message: '请输入姓名'},
+        price: { required: true, message: '请输入金额'},
+        way: { required: true, message: '请选择支出用途' },
+        payway: { required: true, message: '请选择支出方式' },
+        date: [{ required: true, message: '请选择日期', trigger: 'change' }],
+      },
+      pickerOptions: {
+          disabledDate(time) {
+          return time.getTime() > Date.now();
+        },
+        shortcuts: [{
+          text: '今天',
+          onClick(picker) {
+            picker.$emit('pick', new Date());
+          }
+        }, {
+          text: '昨天',
+          onClick(picker) {
+            const date = new Date();
+            date.setTime(date.getTime() - 3600 * 1000 * 24);
+            picker.$emit('pick', date);
+          }
+        }, {
+          text: '一周前',
+          onClick(picker) {
+            const date = new Date();
+            date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
+            picker.$emit('pick', date);
+          }
+        }]
+      }
     }
   },
-  mounted() {
-    var myChart = echarts.init(document.getElementById('chart'));
-    // 绘制图表
-    myChart.setOption({
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          crossStyle: {
-            color: '#999'
-          }
+  methods: {
+    async getData (page, rows) {
+      let res = await this.$store.dispatch('queryExpendPage', {page, rows})
+      this.expendTable = res.data.list
+      this.pageData.page = res.data.pageNum
+      this.pageData.rows = res.data.pageSize
+      this.pageData.total = res.data.total
+    },
+    async queryCapital() {
+      let res = await this.$store.dispatch('queryCapital');
+      this.total = res.data.total
+      this.debt = res.data.debt
+      this.totalExpend = res.data.expend
+    },
+    async queryYearMouth() {
+      let res = await this.$store.dispatch('queryYearMouth');
+      this.yearExpend = res.data.yearExpend
+      this.mouthExpend = res.data.mouthExpend
+    },
+    async editDataEvent(form) {
+      let res = await this.$store.dispatch('updateExpend',qs.stringify(form))
+      if (res.data == 200) {
+        this.$message({
+          message: '已修改',
+          type: 'success'
+        });
+        this.getData(this.pageData.page,this.pageData.rows)
+        this.queryCapital()
+        this.queryYearMouth()
+        this.dialogFormVisible = false
+      } else {
+        this.$message.error('修改失败');
+      }
+    },
+    async delData(index, value) {
+      let res = await this.$store.dispatch('delExpend', qs.stringify(value))
+      if (res.data == 200) {
+        this.$message({
+          message: '删除成功',
+          type: 'success'
+        });
+        this.getData(this.pageData.page,this.pageData.rows)
+        this.queryCapital()
+        this.queryYearMouth()
+      } else {
+        this.$message.error('删除失败');
+      }
+    },
+    syncData(index, value) {
+      this.dialogFormVisible = true
+      this.expendForm = Object.assign({},value)
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields();
+    },
+    editData(form) {
+      this.$refs['expendForm'].validate((valid) => {
+        if (valid) {
+          this.editDataEvent(form)
         }
-      },
-      toolbox: {
-        feature: {
-          dataView: {show: true, readOnly: false},
-          magicType: {show: true, type: ['line', 'bar']},
-          restore: {show: true},
-          saveAsImage: {show: true}
-        }
-      },
-      legend: {
-        data: ['蒸发量', '降水量', '平均温度']
-      },
-      xAxis: [
-        {
-          type: 'category',
-          data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-          axisPointer: {
-            type: 'shadow'
-          }
-        }
-      ],
-      yAxis: [
-        {
-          type: 'value',
-          name: '水量',
-          min: 0,
-          max: 250,
-          interval: 50,
-          axisLabel: {
-            formatter: '{value} ml'
-          }
-        },
-        {
-          type: 'value',
-          name: '温度',
-          min: 0,
-          max: 25,
-          interval: 5,
-          axisLabel: {
-            formatter: '{value} °C'
-          }
-        }
-      ],
-      series: [
-        {
-          name: '蒸发量',
-          type: 'bar',
-          data: [2.0, 4.9, 7.0, 23.2, 25.6, 76.7, 135.6, 162.2, 32.6, 20.0, 6.4, 3.3]
-        },
-        {
-          name: '降水量',
-          type: 'bar',
-          data: [2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3]
-        },
-        {
-          name: '平均温度',
-          type: 'line',
-          yAxisIndex: 1,
-          data: [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2]
-        }
-      ]
-    });
+      });
+    },
+    currentChange(value) {
+      this.pageData.page = value
+      this.getData(this.pageData.page,this.pageData.rows)
+    },
+    sizeChange(value) {
+      this.pageData.rows = value
+      this.getData(this.pageData.page, this.pageData.rows)
+    }
+  },
+  created() {
+    this.getData(this.pageData.page,this.pageData.rows)
+    this.queryCapital()
+    this.queryYearMouth()
   }
 }
 </script>
 
 <style scoped>
-
+.bold {
+  font-weight: 700;
+}
 </style>
