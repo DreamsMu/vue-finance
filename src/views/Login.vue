@@ -77,17 +77,19 @@ export default {
         async loginEvent(){
             let res = await this.$store.dispatch('login',qs.stringify(this.loginForm));
             if(res.data.code == 200) {
-                this.$router.push('/main')
+                this.$store.state.user = res.data.user
+                sessionStorage.setItem("token", res.data.token)
+                sessionStorage.setItem("user", qs.stringify(res.data.user))
                 this.$message({
                     type: 'success',
-                    message: '欢迎'+this.$store.state.user.name+'用户'
+                    message: res.data.message
                 })
-            } else if (res.data.code == 201) {
-                this.$message.error('用户名或密码错误')
-            } else if (res.data.code == 404) {
-                this.$message.error('用户不存在')
+                this.$router.push('/main')
             } else {
-                this.$message.error('失败')
+                this.$message({
+                    type: 'error',
+                    message: res.data.message
+                })
             }
         },
         randomNum(min, max) {

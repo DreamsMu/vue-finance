@@ -75,14 +75,16 @@ export default {
             if (this.userForm.total == '') this.userForm.total = 0
             if (this.userForm.debt == '') this.userForm.debt = 0
             let res = await this.$store.dispatch('updateUserSet', qs.stringify(this.userForm))
-            if (res.data == 200) {
+            if (res.data.code == 200) {
                 this.$message({
                     type: 'success',
                     message: "已修改"
                 })
+                this.$store.state.user = res.data.user
+                sessionStorage.setItem("user",qs.stringify(res.data.user))
                 this.loading = false
                 this.getUserId()
-            } else if (res.data == 222) {
+            } else if (res.data.code == 222) {
                 this.$message({
                     type: 'error',
                     message: "用户名已存在"

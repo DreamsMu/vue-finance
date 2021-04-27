@@ -10,6 +10,7 @@ import VueAxios from 'vue-axios'
 Vue.use(VueAxios, axios)
 Vue.use(ElementUI);
 Vue.config.productionTip = false
+Vue.prototype.$bus = new Vue()
 
 new Vue({
   router,

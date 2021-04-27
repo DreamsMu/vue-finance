@@ -2,7 +2,7 @@
   <div>
     <el-card class="box-card item" v-for="(item,index) in userData" :key="index">
       <div slot="header" class="clearfix">
-        <span  style="color: #409EFF; font-weight: 700;">{{item.name}}</span>
+        <span  style="font-weight: 700;" :class="item.power == '1' ? 'vip' : 'member'">{{item.name}}<i v-if="item.power == '1' ? true : false" class="el-icon-medal-1"></i></span>
         <el-button style="float: right; padding: 3px 0" type="text" @click="open(item)">操作按钮</el-button>
       </div>
       <span>用户名：</span><span style="color: #909399; margin-right: 30px; font-size: 14px;">{{item.username}}</span>
@@ -137,5 +137,11 @@ export default {
 }
 .clearfix:after {
   clear: both
+}
+.vip{
+  color: rgb(207, 164, 114);
+}
+.member {
+  color: #409EFF; 
 }
 </style>

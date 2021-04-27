@@ -147,6 +147,8 @@ export default {
   name: "home",
   data() {
     return {
+      // eventHub: new Vue(),
+
       dialogFormVisible: false,
       activeName: 'first',
       incomeForm: {
@@ -200,7 +202,7 @@ export default {
   },
   methods: {
     goMain() {
-      this.$router.push('/')
+      this.$router.push('/main')
     },
     goIncome() {
       this.$router.push('/income')
@@ -217,14 +219,16 @@ export default {
     goUserSet() {
       this.$router.push('/userset')
     },
-    exit() {
-      localStorage.setItem("token", 'false');
-      localStorage.removeItem("id");
-      localStorage.removeItem("name");
-      localStorage.removeItem("power");
-      localStorage.removeItem("master");
-      localStorage.removeItem("family_id");
-      this.$router.push('/login')
+    async exit() {
+      let res = await this.$store.dispatch('logout')
+      if(res.data.code == 200) {
+        sessionStorage.clear()
+        this.$message({
+          message: res.data.message,
+          type: 'success'
+        })
+        this.$router.push('/login')
+      }
     },
     resetForm() {
       this.$refs['incomeForm'].resetFields();
@@ -254,7 +258,9 @@ export default {
           type: 'success'
         });
         this.dialogFormVisible = false
-        this.$router.go(0)
+        this.$bus.$emit("queryMain")
+        this.$bus.$emit("queryIncome")
+        this.$bus.$emit("queryChart")
       } else {
         this.$message.error('添加失败');
       }
@@ -264,12 +270,14 @@ export default {
       this.expendForm.family_id = this.$store.state.user.family_id
       let res = await this.$store.dispatch('insertExpendData', qs.stringify(this.expendForm))
       if (res.data == 200) {
-        this.$router.go(0)
         this.dialogFormVisible = false
         this.$message({
           message: '添加成功',
           type: 'success'
         });
+        this.$bus.$emit("queryMain")
+        this.$bus.$emit("queryExpend")
+        this.$bus.$emit("queryChart")
       } else {
         this.$message.error('添加失败');
       }

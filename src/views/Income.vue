@@ -7,7 +7,7 @@
             <span style="color: #606266;">总资金</span>
           </div>
           <div style="color: #E6A23C;">
-            ¥ {{ total.toLocaleString() }}
+            ¥ {{ card.total.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -17,7 +17,7 @@
             <span style="color: #606266;">月收入</span>
           </div>
           <div style="color: #67C23A;">
-            ¥ {{ mouthIncome.toLocaleString() }}
+            ¥ {{ card.incomeMouth.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -27,7 +27,7 @@
             <span style="color: #606266;">年收入</span>
           </div>
           <div style="color: #67C23A;">
-            ¥ {{ yearIncome.toLocaleString() }}
+            ¥ {{ card.incomeYear.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -37,14 +37,14 @@
             <span style="color: #606266;">总收入</span>
           </div>
           <div style="color: #67C23A;">
-            ¥ {{ totalIncome.toLocaleString() }}
+            ¥ {{ card.incomeTotal.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
     </el-row>
 
     <el-table
-        :data="incomeTable"
+        :data="incomeList"
         style="width: 100%; margin-top: 20px">
       <el-table-column
           prop="date"
@@ -124,21 +124,17 @@
 
 <script>
 import qs from 'qs'
+import {mapState} from 'vuex'
 
 export default {
   name: "Income",
   data() {
     return {
-      total: '',
-      mouthIncome: '',
-      yearIncome: '',
-      totalIncome: '',
       dialogFormVisible: false,
       incomeForm: {},
-      incomeTable: [],
       pageData: {
         page: 1,
-        rows: 5,
+        rows: 10,
         total: 0
       },
       rulesIncome: {
@@ -174,15 +170,24 @@ export default {
       }
     }
   },
-  created() {
+  computed: {
+    ...mapState(['card','incomeList'])
+  },
+  mounted() {
     this.getData(this.pageData.page, this.pageData.rows)
-    this.queryCapital()
-    this.queryYearMouthIncome()
+    this.$store.dispatch('queryCapital')
+    this.$store.dispatch('queryYearMouthIncome')
+
+    let _this = this
+    this.$bus.$on("queryIncome", function(){
+      _this.getData(_this.pageData.page, _this.pageData.rows)
+      _this.$store.dispatch('queryCapital')
+      _this.$store.dispatch('queryYearMouthIncome')
+    })
   },
   methods: {
     async getData(page, rows) {
       let res = await this.$store.dispatch('queryIncomePage',{page, rows})
-      this.incomeTable = res.data.list
       this.pageData.page = res.data.pageNum
       this.pageData.rows = res.data.pageSize
       this.pageData.total = res.data.total
@@ -196,8 +201,8 @@ export default {
         });
         this.dialogFormVisible = false
         this.getData(this.pageData.page,this.pageData.rows)
-        this.queryCapital()
-        this.queryYearMouthIncome()
+        this.$store.dispatch('queryCapital')
+        this.$store.dispatch('queryYearMouthIncome')
       } else {
         this.$message.error('修改失败');
       }
@@ -210,21 +215,11 @@ export default {
           type: 'success'
         });
         this.getData(this.pageData.page,this.pageData.rows)
-        this.queryCapital()
-        this.queryYearMouthIncome()
+        this.$store.dispatch('queryCapital')
+        this.$store.dispatch('queryYearMouthIncome')
       } else {
         this.$message.error('删除失败');
       }
-    },
-    async queryCapital() {
-      let res = await this.$store.dispatch('queryCapital');
-      this.total = res.data.total
-      this.totalIncome = res.data.income
-    },
-    async queryYearMouthIncome() {
-      let res = await this.$store.dispatch('queryYearMouthIncome');
-      this.yearIncome = res.data.yearIncome
-      this.mouthIncome = res.data.mouthIncome
     },
     syncData(index, value) {
       this.dialogFormVisible = true

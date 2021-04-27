@@ -7,7 +7,7 @@
             <span>总资金</span>
           </div>
           <div style="color: #E6A23C;">
-            ¥ {{ total.toLocaleString() }}
+            ¥ {{ card.total.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -17,7 +17,7 @@
             <span>月支出</span>
           </div>
           <div style="color: #F56C6C;">
-            ¥ {{ mouthExpend.toLocaleString() }}
+            ¥ {{ card.expendMouth.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -27,7 +27,7 @@
             <span>年支出</span>
           </div>
           <div style="color: #F56C6C;">
-            ¥ {{ yearExpend.toLocaleString() }}
+            ¥ {{ card.expendYear.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -37,7 +37,7 @@
             <span>总支出</span>
           </div>
           <div style="color: #F56C6C;">
-            ¥ {{ totalExpend.toLocaleString() }}
+            ¥ {{ card.expendTotal.toLocaleString() }}
           </div>
         </el-card>
       </el-col>
@@ -46,10 +46,10 @@
           <div slot="header" class="clearfix">
             <span>欠款</span>
           </div>
-          <div v-if="debt == 0 ? false : true" style="color: #F56C6C;">
-            ¥ {{ debt.toLocaleString() }}
+          <div v-if="card.debt == 0 ? false : true" style="color: #F56C6C;">
+            ¥ {{ card.debt.toLocaleString() }}
           </div>
-          <div v-if="debt == 0 ? true : false" style="color: #C0C4CC">
+          <div v-if="card.debt == 0 ? true : false" style="color: #C0C4CC">
             无
           </div>
         </el-card>
@@ -57,7 +57,7 @@
     </el-row>
 
     <el-table
-        :data="expendTable"
+        :data="expendList"
         style="width: 100%; margin-top: 20px">
       <el-table-column
           prop="date"
@@ -157,22 +157,17 @@
 
 <script>
 import qs from 'qs'
+import {mapState} from 'vuex'
 
 export default {
   name: "Expend",
   data() {
     return {
       dialogFormVisible: false,
-      total: '',
-      mouthExpend: '',
-      yearExpend: '',
-      totalExpend: '',
-      debt: '',
       expendForm: {},
-      expendTable: [],
       pageData: {
         page: 1,
-        rows: 5,
+        rows: 10,
         total: 0
       },
       rulesExpend: {
@@ -209,24 +204,15 @@ export default {
       }
     }
   },
+  computed: {
+    ...mapState(['card','expendList'])
+  },
   methods: {
     async getData (page, rows) {
       let res = await this.$store.dispatch('queryExpendPage', {page, rows})
-      this.expendTable = res.data.list
       this.pageData.page = res.data.pageNum
       this.pageData.rows = res.data.pageSize
       this.pageData.total = res.data.total
-    },
-    async queryCapital() {
-      let res = await this.$store.dispatch('queryCapital');
-      this.total = res.data.total
-      this.debt = res.data.debt
-      this.totalExpend = res.data.expend
-    },
-    async queryYearMouth() {
-      let res = await this.$store.dispatch('queryYearMouth');
-      this.yearExpend = res.data.yearExpend
-      this.mouthExpend = res.data.mouthExpend
     },
     async editDataEvent(form) {
       let res = await this.$store.dispatch('updateExpend',qs.stringify(form))
@@ -236,8 +222,8 @@ export default {
           type: 'success'
         });
         this.getData(this.pageData.page,this.pageData.rows)
-        this.queryCapital()
-        this.queryYearMouth()
+        this.$store.dispatch('queryCapital');
+        this.$store.dispatch('queryYearMouth')
         this.dialogFormVisible = false
       } else {
         this.$message.error('修改失败');
@@ -251,8 +237,8 @@ export default {
           type: 'success'
         });
         this.getData(this.pageData.page,this.pageData.rows)
-        this.queryCapital()
-        this.queryYearMouth()
+        this.$store.dispatch('queryCapital');
+        this.$store.dispatch('queryYearMouth')
       } else {
         this.$message.error('删除失败');
       }
@@ -280,10 +266,17 @@ export default {
       this.getData(this.pageData.page, this.pageData.rows)
     }
   },
-  created() {
+  mounted() {
     this.getData(this.pageData.page,this.pageData.rows)
-    this.queryCapital()
-    this.queryYearMouth()
+    this.$store.dispatch('queryCapital')
+    this.$store.dispatch('queryYearMouth')
+
+    let _this = this
+    this.$bus.$on("queryExpend", function(){
+      _this.getData(_this.pageData.page, _this.pageData.rows)
+      _this.$store.dispatch('queryCapital')
+      _this.$store.dispatch('queryYearMouth')
+    })
   }
 }
 </script>

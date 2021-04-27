@@ -15,25 +15,78 @@
 
 <script>
 import * as echarts from 'echarts';
+import {mapState} from 'vuex'
 
 export default {
   name: "Chart",
   data () {
     return {
-      year: '',
-      incomeWayData: [],
-      expendPayWayData: [],
-      expendWayData: {},
-      mainData: [],
       activeClass: ''
     }
   },
+  computed: {
+    ...mapState(['mainChart', 'incomeWayChart', 'expendPaywayChart', 'expendWayChart'])
+  },
   methods: {
+    async queryMainData() {
+      var line = echarts.init(document.getElementById('line'));
+      line.showLoading({text: "数据正在加载..."});
+      await this.$store.dispatch('queryMainData');
+      line.hideLoading();
+      line.setOption({
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            crossStyle: {
+              color: '#999'
+            }
+          }
+        },
+        legend: {
+          data: ['收入', '支出', '总资金']
+        },
+        xAxis: [
+          {
+            type: 'category',
+            data: this.mainChart.mouth,
+            axisPointer: {
+              type: 'shadow'
+            }
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value',
+            name: '金额',
+            axisLabel: {
+              formatter: '{value}'
+            }
+          }
+        ],
+        series: [
+          {
+            name: '收入',
+            type: 'bar',
+            data: this.mainChart.income
+          },
+          {
+            name: '支出',
+            type: 'bar',
+            data: this.mainChart.expend
+          },
+          {
+            name: '总资金',
+            type: 'line',
+            data: this.mainChart.total
+          }
+        ]
+      });
+    },
     async getIncomeWay() {
       var incomePie = echarts.init(document.getElementById('incomePie'));
       incomePie.showLoading({text: "数据正在加载..."});
-      let res = await this.$store.dispatch('queryIncomeWay');
-      this.incomeWayData = res.data
+      await this.$store.dispatch('queryIncomeWay');
       incomePie.hideLoading();
       incomePie.setOption({
         title: {
@@ -58,7 +111,7 @@ export default {
             itemStyle: {
               borderRadius: 8
             },
-            data: this.incomeWayData
+            data: this.incomeWayChart
           }
         ]
       });
@@ -66,8 +119,7 @@ export default {
     async getExpendPayWay() {
       var expendPie = echarts.init(document.getElementById('expendPie'));
       expendPie.showLoading({text: "数据正在加载..."});
-      let res = await this.$store.dispatch('queryExpendPayway');
-      this.expendPayWayData = res.data
+      await this.$store.dispatch('queryExpendPayway');
       expendPie.hideLoading();
       expendPie.setOption({
         title: {
@@ -105,7 +157,7 @@ export default {
             labelLine: {
               show: false
             },
-            data: this.expendPayWayData
+            data: this.expendPaywayChart
           }
         ]
       });
@@ -113,8 +165,7 @@ export default {
     async getExpendWay() {
       var bar = echarts.init(document.getElementById('bar'));
       bar.showLoading({text: "数据正在加载..."});
-      let res = await this.$store.dispatch('queryExpendWay');
-      this.expendWayData = res.data
+      await this.$store.dispatch('queryExpendWay');
       bar.hideLoading();
       bar.setOption({
         title: {
@@ -138,68 +189,12 @@ export default {
         },
         yAxis: {
           type: 'category',
-          data: this.expendWayData.name
+          data: this.expendWayChart.name
         },
         series: [
           {
             type: 'bar',
-            data: this.expendWayData.value
-          }
-        ]
-      });
-    },
-    async queryMainData() {
-      var line = echarts.init(document.getElementById('line'));
-      line.showLoading({text: "数据正在加载..."});
-      let res = await this.$store.dispatch('queryMainData');
-      this.mainData = res.data
-      line.hideLoading();
-      line.setOption({
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-            crossStyle: {
-              color: '#999'
-            }
-          }
-        },
-        legend: {
-          data: ['收入', '支出', '总资金']
-        },
-        xAxis: [
-          {
-            type: 'category',
-            data: this.mainData.mouth,
-            axisPointer: {
-              type: 'shadow'
-            }
-          }
-        ],
-        yAxis: [
-          {
-            type: 'value',
-            name: '金额',
-            axisLabel: {
-              formatter: '{value}'
-            }
-          }
-        ],
-        series: [
-          {
-            name: '收入',
-            type: 'bar',
-            data: this.mainData.income
-          },
-          {
-            name: '支出',
-            type: 'bar',
-            data: this.mainData.expend
-          },
-          {
-            name: '总资金',
-            type: 'line',
-            data: this.mainData.total
+            data: this.expendWayChart.value
           }
         ]
       });
@@ -210,6 +205,14 @@ export default {
     this.getExpendPayWay()
     this.getExpendWay()
     this.queryMainData()
+
+    let _this = this
+    this.$bus.$on("queryChart", function(){
+      _this.getIncomeWay()
+      _this.getExpendPayWay()
+      _this.getExpendWay()
+      _this.queryMainData()
+    })
   }
 }
 </script>

@@ -25,8 +25,8 @@
                 </el-form-item>
                 <el-form-item
                     label="家庭ID"
-                    prop="familyId">
-                    <el-input type="text" v-model="registerForm.familyId" autocomplete="off"></el-input>
+                    prop="family_id">
+                    <el-input type="text" v-model="registerForm.family_id" autocomplete="off"></el-input>
                 </el-form-item>
                 <el-row :gutter="20">
                     <el-col :span="14">
@@ -52,6 +52,8 @@
 </template>
 
 <script>
+import qs from 'qs'
+
 export default {
     data() {
         var validateCode = (rule, value, callback) => {
@@ -85,7 +87,7 @@ export default {
             username: '',
             password: '',
             checkPass: '',
-            familyId: '',
+            family_id: '',
             code: ''
         },
         rulesRegister:{
@@ -93,7 +95,7 @@ export default {
             username:{ required: true, message: '请输入用户名' },
             password:{ required: true, validator: validatePassword, trigger: 'blur' },
             checkPass: { required: true, validator: validateCheckPass, trigger: 'blur' },
-            familyId: { required: true, message: '请输入家庭ID'},
+            family_id: { required: true, message: '请输入家庭ID'},
             code: { required: true, validator: validateCode, trigger: 'blur' }
         }
       };
@@ -112,16 +114,32 @@ export default {
             });
         },
         async registerEvent(){
-            let code = await this.$store.dispatch('register',this.registerForm);
-            if (code == 200) {
-                this.$router.push('/')
-                this.$message({
-                    type: 'success',
-                    message: '欢迎'+this.$store.state.user.name+'用户'
-                })
+            let res = await this.$store.dispatch('register',qs.stringify(this.registerForm));
+            console.log(res.data);
+            if (res.data.code1 == 100) {
+                if (res.data.code == 200) {
+                    this.$router.push('/')
+                    this.$message({
+                        type: 'success',
+                        message: "注册成功，已登陆"
+                    })
+                    this.$store.state.user = res.data.user
+                    sessionStorage.setItem("token", res.data.token)
+                    sessionStorage.setItem("user", qs.stringify(res.data.user))
+                    this.$router.push('/main')
+                } else {
+                    this.$message({
+                        type: 'error',
+                        message: res.data.message
+                    })
+                }
             } else {
-                this.$message.error('注册失败')
+                this.$message({
+                    type: 'error',
+                    message: res.data.message1
+                })
             }
+            
         },
         randomNum(min, max) {
             return Math.floor(Math.random() * (max - min) + min);

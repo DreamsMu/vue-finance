@@ -90,7 +90,7 @@ export default router
 
 router.beforeEach((to, from, next) => {
   if (to.meta.requireAuth) {
-    if (localStorage.getItem("token") == 'true') {
+    if (sessionStorage.getItem("token") == 'true') {
       next()
     } else {
       next({
@@ -98,7 +98,7 @@ router.beforeEach((to, from, next) => {
       })
     }
   } else {
-    if(localStorage.getItem("token") == 'true'){
+    if(sessionStorage.getItem("token") == 'true'){
       next('/');
     }else{
       next();
